@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Smart Shuffle</title>
+	
+</head>
+
+<body>
+    <h1>Look mum, no backend!</h1>
+	<a id="loginLink">Login</a>
+    
+    <br>
+
+    <form>  
+        <input type = "button" onclick = "fetchPlaylists()" value = "Load my playlists">   
+     </form>    
+            
+    <script src = 'main.js'></script>
+    <script>
+        document.getElementById("loginLink").setAttribute("href",authURI);
+    </script>
+
+</body>
+</html>
