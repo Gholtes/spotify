@@ -8,12 +8,41 @@ const scope = ""
 
 //Constants 
 const AUTH_BASE_URL = 'https://accounts.spotify.com/authorize';
-const API_ENDPOINT = 'https://api.spotify.com/v1/me';
-let ACCESS_TOKEN;
+const API_ENDPOINT = 'https://api.spotify.com/v1/';
+const PLAYLIST_ENDPOINT = "me/playlists?limit=3"
+function AUDIOANALYSIS_ENDPOINT(trackIDs) {
+	tracIDstr = ""; //TODO paginate this to a max of 90 songs to keep HTTP requests under 2048 chars
+	for (let i = 0; i < trackIDs.length; i++) {
+		tracIDstr = tracIDstr.concat(trackIDs[i])
+		if (i < trackIDs.length-1) {
+			tracIDstr = tracIDstr.concat("%2C");
+		}
+	}
+	
+	return "audio-features" + "?ids=" + tracIDstr
+}
+
+//https://api.spotify.com/v1/audio-features?ids=0washXlWqFEj5oCjNWwA2E%2C07UeBq7UkdDgUq5c4U2gZc%2C62WqX503wDjjBiTJnqq5Yn%2C63UD9AoNO8l04m0aAHoiaX"
+//https://api.spotify.com/v1/audio-features?ids=0washXlWqFEj5oCjNWwA2E%07UeBq7UkdDgUq5c4U2gZc%62WqX503wDjjBiTJnqq5Yn%63UD9AoNO8l04m0aAHoiaX
+
+function TRACKS_ENDPOINT(playlist_id) {
+	return "playlists/"+playlist_id+"/tracks";
+}
+
+
 
 //Derived Constants 
 const authURI = AUTH_BASE_URL + '?client_id='+client_id+"&response_type=token&redirect_uri="+login_redirect_route+"&scope="+scope;
-var nextPlaylistPage = "";
+
+//Variables
+let ACCESS_TOKEN;
+var playlists; // = JSON.parse('[{"name":"[None]"}, {"name":"[None]"}, {"name":"[None]"}]') //To be populated 
+var tracks;
+var trackIDs;
+var trackAnalysis;
+var nextPlaylistPage;
+var trackString = "";
+
 
 function getCurrentQueryParameters(delimiter = '#') {
 	// the access_token is passed back in a URL fragment, not a query string
@@ -22,6 +51,76 @@ function getCurrentQueryParameters(delimiter = '#') {
 	const params = new URLSearchParams(currentLocation);
 	return params;
 }
+
+function fetchTrackAnalysis(trackIDs) {
+
+	const currentQueryParameters = getCurrentQueryParameters('#');
+	ACCESS_TOKEN = currentQueryParameters.get('access_token');
+
+	ANALYSIS_ENDPOINT_ID = AUDIOANALYSIS_ENDPOINT(trackIDs);
+	console.log(API_ENDPOINT+ANALYSIS_ENDPOINT_ID)
+
+	const fetchOptions = {
+		method: 'GET',
+		headers: new Headers({
+			'Authorization': `Bearer ${ACCESS_TOKEN}`
+		})
+	};
+
+	fetch(API_ENDPOINT + ANALYSIS_ENDPOINT_ID, fetchOptions).then(function (response) {
+		return response.json();
+	}).then(function (json) {
+		//Add analysis to track data
+		for (let i = 0; i < tracks.length; i++) {
+			tracks[i]["analysis"] = json["audio_features"][i];
+		} 
+		console.log(tracks);
+	}).catch(function (error) {
+		console.log(error);
+	});
+}
+
+function fetchPlaylistTracks(button_id) {
+
+	const currentQueryParameters = getCurrentQueryParameters('#');
+	ACCESS_TOKEN = currentQueryParameters.get('access_token');
+
+	playlist_id = playlists[button_id]["id"];
+	TRACKS_ENDPOINT_ID = TRACKS_ENDPOINT(playlist_id);
+	console.log(API_ENDPOINT+TRACKS_ENDPOINT_ID)
+
+	const fetchOptions = {
+		method: 'GET',
+		headers: new Headers({
+			'Authorization': `Bearer ${ACCESS_TOKEN}`
+		})
+	};
+
+	fetch(API_ENDPOINT + TRACKS_ENDPOINT_ID, fetchOptions).then(function (response) {
+		return response.json();
+	}).then(function (json) {
+		items = json["items"];
+		tracks = [];
+		var trackIDs = [];
+		trackString = "";
+		//Parse JSON
+		for (let i = 0; i < items.length; i++) {
+			tracks.push(items[i]["track"])
+			trackIDs.push(items[i]["track"]["id"])
+			trackString = trackString.concat(items[i]["track"]["name"] + "//")
+			//TODO pagination of analysis call here!
+		}
+	
+	//Update stong display
+	document.getElementById("trackString").innerHTML = trackString;	
+	//Call for analysis
+	fetchTrackAnalysis(trackIDs);
+
+	}).catch(function (error) {
+		console.log(error);
+	});
+}
+
 
 function fetchPlaylists() {
 	const currentQueryParameters = getCurrentQueryParameters('#');
@@ -34,16 +133,23 @@ function fetchPlaylists() {
 		})
 	};
 
-	fetch(API_ENDPOINT + "/playlists?limit=10", fetchOptions).then(function (response) {
+	fetch(API_ENDPOINT + PLAYLIST_ENDPOINT, fetchOptions).then(function (response) {
 		return response.json();
 	}).then(function (json) {
-		console.log(json);
 		nextPlaylistPage = json["next"];
-		console.log(nextPlaylistPage);
-		// updateProfileInformation(json);
+		playlists = json["items"];
+		renderPlaylists(playlists);
 	}).catch(function (error) {
 		console.log(error);
-	});
+	}); 
+}
+
+function renderPlaylists(playlists) {
+	console.log(playlists);
+	 //Set playlists
+	 document.getElementById("playlist0").innerHTML = playlists[0]["name"];
+	 document.getElementById("playlist1").innerHTML = playlists[1]["name"];
+	 document.getElementById("playlist2").innerHTML = playlists[2]["name"];
 }
 
 function updateProfileInformation(json) {

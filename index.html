@@ -17,7 +17,25 @@
 
     <form>  
         <input type = "button" onclick = "fetchPlaylists()" value = "Load my playlists">   
-     </form>    
+    </form>    
+
+    <a id="playlist0">...</a>  
+    <form>  
+        <input type = "button" onclick = "fetchPlaylistTracks(0)" value = "Load playlist">   
+    </form> 
+
+    <a id="playlist1">...</a> 
+    <form>  
+        <input type = "button" onclick = "fetchPlaylistTracks(1)" value = "Load playlist">   
+    </form> 
+
+    <a id="playlist2">...</a> 
+    <form>  
+        <input type = "button" onclick = "fetchPlaylistTracks(2)" value = "Load playlist">   
+    </form> 
+
+    <p id="trackString"></p>
+    
             
     <script src = 'main.js'></script>
     <script>
