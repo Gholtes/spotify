@@ -74,6 +74,7 @@ function reorderPlaylist() {
 			reorderedTracks.push(NearestSong)
 			song = NearestSong
 		return reorderedTracks
+		
 		*/
 		let uriList = [];
 		relativeOrder = [];
