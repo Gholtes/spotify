@@ -42,6 +42,8 @@ var nextPlaylistPage;
 var trackString = "";
 var visX = [], visY = [], visZ = [];
 const varX = "tempo", varY = "energy", varZ = "key";
+var reordered = false;
+var relativeOrder = []
 
 function reorderPlaylist() {
 	//Define solver promise
@@ -74,16 +76,9 @@ function reorderPlaylist() {
 		return reorderedTracks
 		*/
 		let uriList = [];
+		relativeOrder = [];
 		let n = tracks.length-1;
 		
-		//create used attribute, log position
-		for (let i = 0; i < tracks.length; i++) {
-			tracks[i]["used"] = false;
-			visX.push(tracks[i]["analysis"][varX]);
-			visY.push(tracks[i]["analysis"][varY]);
-			visZ.push(tracks[i]["analysis"][varZ]);
-		}
-
 		song = tracks[0];
 		uriList.push(song["uri"]);
 		song["used"] = true; 
@@ -91,6 +86,8 @@ function reorderPlaylist() {
 		var minDistance = 9999999999;
 		var nearestSong;
 		var nearestSongIndex = 0;
+		relativeOrder.push(0); //used to map new order to tracks array without sorting
+		
 
 		console.log(tracks);
 
@@ -112,6 +109,7 @@ function reorderPlaylist() {
 			uriList.push(nearestSong["uri"]);
 			song = nearestSong;	
 			tracks[nearestSongIndex]["used"] = true;
+			relativeOrder.push(nearestSongIndex);
 			minDistance = 9999999999;
 		} 
 
@@ -120,6 +118,7 @@ function reorderPlaylist() {
 	});
 
 	solver.then(function (uriList) {
+		reordered = true; //allow visualisation
 		console.log(uriList);
 		replaceTracks(uriList, playlist_id) //Pass to reorder
 	}, function (error) {
@@ -198,6 +197,7 @@ function fetchTrackAnalysis(trackIDs) {
 
 function fetchPlaylistTracks(button_id) {
 	visX = [], visY = [], visZ = []; //reset
+	reordered = false;
 
 	const currentQueryParameters = getCurrentQueryParameters('#');
 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
@@ -325,6 +325,8 @@ function draw() {
 	background(backgroundCol);
 	rotateY(frameCount * 0.01)
 	n = visX.length-1;
+	console.log(visX);
+	console.log(n);
 
 	stroke(cubeLineCol);
 
@@ -364,17 +366,40 @@ function draw() {
 
 	stroke(songPointsCol);
 
-	for (var i = 0; i < n; i++) {
-		push();
-		x = map(visX[i], minX, maxX, -boxSz, boxSz);
-		y = map(visY[i], minY, maxY, -boxSz, boxSz);
-		z = map(visZ[i], minZ, maxZ, -boxSz, boxSz);
-		translate(x,y,z);
-		sphere(boxSz / 50, 8);
-		//labels
-		fill(255);
-		pop();	
-	  }
+	console.log(reordered);
+	if (reordered) {
+		stroke([0,0,255]);
+		let x1, y1, z1;
+		for (var i = 0; i < n; i++) {
+			tracksIndex = relativeOrder[i]
+			push();
+			x = map(visX[tracksIndex], minX, maxX, -boxSz, boxSz);
+			y = map(visY[tracksIndex], minY, maxY, -boxSz, boxSz);
+			z = map(visZ[tracksIndex], minZ, maxZ, -boxSz, boxSz);
+			translate(x,y,z);
+			sphere(boxSz / 50, 8);
+			pop();
+			//Lines
+			if (i > 0) {
+				line(x, y, z, x1, y1, z1);
+			}
+			x1 = x;
+			y1 = y;
+			z1 = z;
+				
+		}
+	} else {
+		for (var i = 0; i < n; i++) {
+			push();
+			x = map(visX[i], minX, maxX, -boxSz, boxSz);
+			y = map(visY[i], minY, maxY, -boxSz, boxSz);
+			z = map(visZ[i], minZ, maxZ, -boxSz, boxSz);
+			translate(x,y,z);
+			sphere(boxSz / 50, 8);
+			//labels
+			pop();	
+		}
+	}
 }
 
 
