@@ -4,7 +4,7 @@
 //App Specific
 const client_id = "f76433fcadb3482cbe90b168aca171b6";
 const login_redirect_route = "http://localhost:8000/";
-const scope = ""
+const scope = "playlist-modify-public"
 
 //Constants 
 const AUTH_BASE_URL = 'https://accounts.spotify.com/authorize';
@@ -21,10 +21,6 @@ function AUDIOANALYSIS_ENDPOINT(trackIDs) {
 	
 	return "audio-features" + "?ids=" + tracIDstr
 }
-
-//https://api.spotify.com/v1/audio-features?ids=0washXlWqFEj5oCjNWwA2E%2C07UeBq7UkdDgUq5c4U2gZc%2C62WqX503wDjjBiTJnqq5Yn%2C63UD9AoNO8l04m0aAHoiaX"
-//https://api.spotify.com/v1/audio-features?ids=0washXlWqFEj5oCjNWwA2E%07UeBq7UkdDgUq5c4U2gZc%62WqX503wDjjBiTJnqq5Yn%63UD9AoNO8l04m0aAHoiaX
-
 function TRACKS_ENDPOINT(playlist_id) {
 	return "playlists/"+playlist_id+"/tracks";
 }
@@ -37,11 +33,97 @@ const authURI = AUTH_BASE_URL + '?client_id='+client_id+"&response_type=token&re
 //Variables
 let ACCESS_TOKEN;
 var playlists; // = JSON.parse('[{"name":"[None]"}, {"name":"[None]"}, {"name":"[None]"}]') //To be populated 
+var playlist_id;
 var tracks;
 var trackIDs;
+var reorderedURIs;
 var trackAnalysis;
 var nextPlaylistPage;
 var trackString = "";
+var visX, visY, visZ;
+
+function reorderPlaylist() {
+	//Define solver promise
+	var solver = new Promise( function(resolve, reject) {
+		/*The problem is to find a order to play the songs such
+		that the difference beween each songs is minimised.
+
+		This can be reframed as a high-dimensional traveling salesperson problem,
+		with the "positions" of each song being determined by their attributes.
+
+		The key attributes used are:
+		- tempo / BPM
+		- key
+
+		algrorithm: Nearest Neighbours
+
+		sortTracks by BPM or shuffle
+		song = tracks[0]
+		reorderedTracks.push(song)
+
+		for i=1 to length tracks:
+			NearestSong = None
+			for nextSong in tracks:
+				if nextSong not yet seen:
+					calculate distance(song, nextSong)
+					if distance < currentMin:
+						NearestSong = nextSong
+			reorderedTracks.push(NearestSong)
+			song = NearestSong
+		return reorderedTracks
+		*/
+		let uriList = [];
+		let n = tracks.length-1;
+		
+		//create used attribute
+		for (let i = 0; i < tracks.length; i++) {
+			tracks[i]["used"] = false;
+		}
+
+		song = tracks[0];
+		uriList.push(song["uri"]);
+		song["used"] = true; 
+		var distance;
+		var minDistance = 9999999999;
+		var nearestSong;
+		var nearestSongIndex = 0;
+		var j;
+
+		console.log(tracks);
+
+		for (let i = 1; i < tracks.length; i++) {
+			for (let j = 0; j < tracks.length; j++) {
+				if (tracks[j]["used"] == false){
+					distance = Math.abs(song["analysis"]["danceability"] - tracks[j]["analysis"]["danceability"]);
+					distance = distance + Math.abs(song["analysis"]["energy"] - tracks[j]["analysis"]["energy"]);
+					distance = distance + Math.abs(song["analysis"]["loudness"] - tracks[j]["analysis"]["loudness"]) / 10; //scale to ~[0-1]
+					distance = distance + Math.abs(song["analysis"]["tempo"] - tracks[j]["analysis"]["tempo"]) / 100; //scale to ~[0-1]
+					distance = distance + Math.abs(song["analysis"]["key"] - tracks[j]["analysis"]["key"]) / 5; //scale to ~[0-1]
+					if (distance < minDistance){
+						minDistance = distance;
+						nearestSong = tracks[j];
+						nearestSongIndex = j;
+					}
+				}
+			}
+			uriList.push(nearestSong["uri"]);
+			song = nearestSong;	
+			tracks[nearestSongIndex]["used"] = true;
+			minDistance = 9999999999;
+		} 
+
+		// Return success
+		resolve(uriList)
+	});
+
+	solver.then(function (uriList) {
+		console.log(uriList);
+		replaceTracks(uriList, playlist_id) //Pass to reorder
+	}, function (error) {
+		console.log(error);
+	});
+
+}
 
 
 function getCurrentQueryParameters(delimiter = '#') {
@@ -52,13 +134,37 @@ function getCurrentQueryParameters(delimiter = '#') {
 	return params;
 }
 
+function replaceTracks(reorderedURIs, playlist_id) {	
+	const currentQueryParameters = getCurrentQueryParameters('#');
+	ACCESS_TOKEN = currentQueryParameters.get('access_token');
+
+	TRACKS_ENDPOINT_ID = TRACKS_ENDPOINT(playlist_id);
+
+	const fetchOptions = {
+		method: 'PUT',
+		headers: new Headers({
+			'Authorization': `Bearer ${ACCESS_TOKEN}`,
+			'Content-Type': "application/json",
+			'Accept': "application/json"
+		}),
+		body: JSON.stringify({"uris": reorderedURIs})
+	};
+
+	fetch(API_ENDPOINT + TRACKS_ENDPOINT_ID, fetchOptions).then(function (response) {
+		return response.json();
+	}).then(function (json) {
+		console.log(json);
+	}).catch(function (error) {
+		console.log(error);
+	});
+}
+
 function fetchTrackAnalysis(trackIDs) {
 
 	const currentQueryParameters = getCurrentQueryParameters('#');
 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
 
 	ANALYSIS_ENDPOINT_ID = AUDIOANALYSIS_ENDPOINT(trackIDs);
-	console.log(API_ENDPOINT+ANALYSIS_ENDPOINT_ID)
 
 	const fetchOptions = {
 		method: 'GET',
@@ -74,7 +180,6 @@ function fetchTrackAnalysis(trackIDs) {
 		for (let i = 0; i < tracks.length; i++) {
 			tracks[i]["analysis"] = json["audio_features"][i];
 		} 
-		console.log(tracks);
 	}).catch(function (error) {
 		console.log(error);
 	});
@@ -86,8 +191,8 @@ function fetchPlaylistTracks(button_id) {
 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
 
 	playlist_id = playlists[button_id]["id"];
+	console.log(playlist_id);
 	TRACKS_ENDPOINT_ID = TRACKS_ENDPOINT(playlist_id);
-	console.log(API_ENDPOINT+TRACKS_ENDPOINT_ID)
 
 	const fetchOptions = {
 		method: 'GET',
@@ -113,14 +218,12 @@ function fetchPlaylistTracks(button_id) {
 	
 	//Update stong display
 	document.getElementById("trackString").innerHTML = trackString;	
-	//Call for analysis
-	fetchTrackAnalysis(trackIDs);
+	fetchTrackAnalysis(trackIDs); //Call for analysis
 
 	}).catch(function (error) {
 		console.log(error);
 	});
 }
-
 
 function fetchPlaylists() {
 	const currentQueryParameters = getCurrentQueryParameters('#');
