@@ -40,7 +40,8 @@ var reorderedURIs;
 var trackAnalysis;
 var nextPlaylistPage;
 var trackString = "";
-var visX, visY, visZ;
+var visX = [], visY = [], visZ = [];
+const varX = "tempo", varY = "energy", varZ = "key";
 
 function reorderPlaylist() {
 	//Define solver promise
@@ -75,9 +76,12 @@ function reorderPlaylist() {
 		let uriList = [];
 		let n = tracks.length-1;
 		
-		//create used attribute
+		//create used attribute, log position
 		for (let i = 0; i < tracks.length; i++) {
 			tracks[i]["used"] = false;
+			visX.push(tracks[i]["analysis"][varX]);
+			visY.push(tracks[i]["analysis"][varY]);
+			visZ.push(tracks[i]["analysis"][varZ]);
 		}
 
 		song = tracks[0];
@@ -87,7 +91,6 @@ function reorderPlaylist() {
 		var minDistance = 9999999999;
 		var nearestSong;
 		var nearestSongIndex = 0;
-		var j;
 
 		console.log(tracks);
 
@@ -180,12 +183,21 @@ function fetchTrackAnalysis(trackIDs) {
 		for (let i = 0; i < tracks.length; i++) {
 			tracks[i]["analysis"] = json["audio_features"][i];
 		} 
+
+		//create used attribute, log position
+		for (let i = 0; i < tracks.length; i++) {
+			tracks[i]["used"] = false;
+			visX.push(tracks[i]["analysis"][varX]);
+			visY.push(tracks[i]["analysis"][varY]);
+			visZ.push(tracks[i]["analysis"][varZ]);
+		}
 	}).catch(function (error) {
 		console.log(error);
 	});
 }
 
 function fetchPlaylistTracks(button_id) {
+	visX = [], visY = [], visZ = []; //reset
 
 	const currentQueryParameters = getCurrentQueryParameters('#');
 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
@@ -280,6 +292,89 @@ function fetchProfileInformation() {
 	}).catch(function (error) {
 		console.log(error);
 	});
+}
+
+//GRAPHICS
+
+var boxSz;
+var x,y,z;
+var label;
+backgroundCol = [0,0,0];
+cubeLineCol = [255,255,255];
+songPointsCol = [0,255,0];
+
+let inconsolata;
+function preload() {
+  inconsolata = loadFont('assets/RobotoMono-Light.ttf');
+}
+
+function setup() {
+	var elmnt = document.getElementById("graphic");
+	var width = elmnt.offsetWidth-10;
+	var height = window.innerHeight-10;
+	var myCanvas = createCanvas(width, height, WEBGL);
+    myCanvas.parent("graphic");
+	frameRate(12);
+	boxSz = Math.round(Math.min(height, width) / 4); //scale by bit to ensure that the cube fits even on diagonal
+
+	textFont(inconsolata);
+  	textSize(Math.round(boxSz/10));
+}
+
+function draw() {
+	background(backgroundCol);
+	rotateY(frameCount * 0.01)
+	n = visX.length-1;
+
+	stroke(cubeLineCol);
+
+	//front
+	line(-boxSz, -boxSz, boxSz, boxSz, -boxSz, boxSz);
+	line(-boxSz, boxSz, boxSz, boxSz, boxSz, boxSz);
+	line(-boxSz, -boxSz, boxSz, -boxSz, boxSz, boxSz);
+	line(boxSz, -boxSz, boxSz, boxSz, boxSz, boxSz);
+  
+	//back
+	line(-boxSz, -boxSz, -boxSz, boxSz, -boxSz, -boxSz);
+	line(-boxSz, boxSz, -boxSz, boxSz, boxSz, -boxSz);
+	line(-boxSz, -boxSz, -boxSz, -boxSz, boxSz, -boxSz);
+	line(boxSz, -boxSz, -boxSz, boxSz, boxSz, -boxSz);
+  
+	//left top
+	line(-boxSz, -boxSz, boxSz, -boxSz, -boxSz, -boxSz);
+	//left bottom
+	line(-boxSz, boxSz, -boxSz, -boxSz, boxSz, boxSz);
+	//right top
+	line(boxSz, -boxSz, boxSz, boxSz, -boxSz, -boxSz);
+	// // right bottom
+	line(boxSz, boxSz, -boxSz, boxSz, boxSz, boxSz);
+
+	//labels
+	label = varX + "/ " + varY + "/ " + varZ + "/ ";
+	text(label, -boxSz, -boxSz);
+
+	// Points
+
+	maxX = Math.max(...visX);
+	minX = Math.min(...visX);
+	maxY = Math.max(...visY);
+	minY = Math.min(...visY);
+	maxZ = Math.max(...visZ);
+	minZ = Math.min(...visZ);
+
+	stroke(songPointsCol);
+
+	for (var i = 0; i < n; i++) {
+		push();
+		x = map(visX[i], minX, maxX, -boxSz, boxSz);
+		y = map(visY[i], minY, maxY, -boxSz, boxSz);
+		z = map(visZ[i], minZ, maxZ, -boxSz, boxSz);
+		translate(x,y,z);
+		sphere(boxSz / 50, 8);
+		//labels
+		fill(255);
+		pop();	
+	  }
 }
 
 
