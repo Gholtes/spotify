@@ -15,18 +15,17 @@ strong {
 }
 
 a {
-	color: #EEEEEE;
+	color: #00FF00;
 	cursor: cell;
 	text-decoration: none;
-    padding: 0 3px;
-    border-radius: 3px;
-    background: #00ff00c0;
+    padding: 0 10px;
+    border-radius: 10px;
+    background: #EEEEEE;
   }
 
 a:hover {
-	background: #00ff00;
+	background: #00ff55;
 }
-
 
 
 .container {

@@ -38,7 +38,7 @@ var tracks;
 var trackIDs;
 var reorderedURIs;
 var trackAnalysis;
-var nextPlaylistPage;
+var nextPlaylistPage = "";
 var trackString = "";
 var visX = [], visY = [], visZ = [];
 const varX = "tempo", varY = "energy", varZ = "key";
@@ -237,7 +237,7 @@ function fetchPlaylistTracks(button_id) {
 	});
 }
 
-function fetchPlaylists() {
+function fetchPlaylists(nextPlaylistPageURL = "") {
 	const currentQueryParameters = getCurrentQueryParameters('#');
 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
 
@@ -248,7 +248,14 @@ function fetchPlaylists() {
 		})
 	};
 
-	fetch(API_ENDPOINT + PLAYLIST_ENDPOINT, fetchOptions).then(function (response) {
+	if (nextPlaylistPageURL == "") {
+		REQUESTURL = API_ENDPOINT + PLAYLIST_ENDPOINT;
+	} else {
+		REQUESTURL = nextPlaylistPageURL;
+	}
+	
+
+	fetch(REQUESTURL, fetchOptions).then(function (response) {
 		return response.json();
 	}).then(function (json) {
 		nextPlaylistPage = json["next"];
