@@ -14,11 +14,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="spotify.css" />
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/spotify.css" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <!-- Fetch p5.js -->
     <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script> 
-    <script src = 'main.js'></script>
+    <script src = 'scripts/smartshuffle.js'></script>
 
     <title>Smart Shuffle</title>
     
@@ -31,56 +32,89 @@
         <!-- left container -->
         <div class="one">
             <h1>Smart Shuffle</h1>
+            Spotify playlist order optimisation tool: 
+            Log in to rearrange your public playlists according to BPM, key and mood. <br>
             Grant Holtes | 2021
 
             <br><br>
 
-            <a id="loginLink">Login</a>
+            <a id="loginLink" class="loginbutton" >Login</a>
 
             <br><br>
 
             <form>  
-                <input type = "button" onclick = "fetchPlaylists()" value = "Load my playlists">   
+                <input type = "button" class="button" onclick = "fetchPlaylists()" value = "Load my playlists">   
             </form>    
 
             <table>
                 <tr> 
-                    <th>
+                    <td>
                         <form>  
-                            <input type = "button" onclick = "fetchPlaylistTracks(0)" value = "load song data">   
+                            <input type = "button" class="playlistbutton"  onclick = "fetchPlaylistTracks(0)" value = "Select >>">   
                         </form> 
-                    </th> 
-                    <th id="playlist0"></th>
+                    </td> 
+                    <td id="playlist0"></td>
                 </tr>
 
                 <tr>
-                    <th>
+                    <td>
                         <form>  
-                            <input type = "button" onclick = "fetchPlaylistTracks(1)" value = "load song data">   
+                            <input type = "button" class="playlistbutton"  onclick = "fetchPlaylistTracks(1)" value = "Select >>">   
                         </form> 
-                    </th> 
-                    <th id="playlist1"></th>
+                    </td> 
+                    <td id="playlist1"></td>
                 </tr>
 
                 <tr>
-                    <th>
+                    <td>
                             <form>  
-                                <input type = "button" onclick = "fetchPlaylistTracks(2)" value = "load song data">   
+                                <input type = "button" class="playlistbutton" onclick = "fetchPlaylistTracks(2)" value = "Select >>">   
                             </form> 
-                    </th> 
-                    <th id="playlist2"></th>
+                    </td> 
+                    <td id="playlist2"></td>
+                </tr>
+
+                <tr>
+                    <td>
+                            <form>  
+                                <input type = "button" class="playlistbutton" onclick = "fetchPlaylistTracks(3)" value = "Select >>">   
+                            </form> 
+                    </td> 
+                    <td id="playlist3"></td>
+                </tr>
+
+                <tr>
+                    <td>
+                            <form>  
+                                <input type = "button" class="playlistbutton" onclick = "fetchPlaylistTracks(4)" value = "Select >>">   
+                            </form> 
+                    </td> 
+                    <td id="playlist4"></td>
                 </tr>
                     
             </table>
 
-            <form>  
-                <input type = "button" onclick = "fetchPlaylists(nextPlaylistPage)" value = "Load more...">   
-            </form> 
+            <table>
+                <tr> 
+                    <td>
+                        <form>  
+                            <input type = "button" class="playlistbutton" onclick = "fetchPlaylists(previousPlaylistPage)" value = "< Previous">   
+                        </form> 
+                    </td>
+                    <td>
+                        <form>  
+                            <input type = "button" class="playlistbutton" onclick = "fetchPlaylists(nextPlaylistPage)" value = "Next >">   
+                        </form> 
+                    </td> 
+                </tr>
+            </table>
 
             <br>
             <form>  
-                <input type = "button" onclick = "reorderPlaylist()" value = "Reorder">   
+                <input type = "button" class="reorderbutton" onclick = "createNewPlaylist()" value = "Optimise">   
             </form> 
+            <br>
+            <i id = warning></i>
             <br>
         </div>
         <!-- right container -->
@@ -94,10 +128,7 @@
         <!-- track str -->
         <p id="trackString"></p>
     </div>
-    
 
-            
-    
     <script>
         document.getElementById("loginLink").setAttribute("href",authURI);
     </script>

@@ -3,13 +3,15 @@
 
 //App Specific
 const client_id = "f76433fcadb3482cbe90b168aca171b6";
-const login_redirect_route = "http://localhost:8000/";
+// const login_redirect_route = "http://localhost:8000/";
+const login_redirect_route = "http://www.grantholtes.com/smartshuffle";
 const scope = "playlist-modify-public"
 
 //Constants 
 const AUTH_BASE_URL = 'https://accounts.spotify.com/authorize';
+const USER_ENDPOINT = "me";
 const API_ENDPOINT = 'https://api.spotify.com/v1/';
-const PLAYLIST_ENDPOINT = "me/playlists?limit=3"
+const PLAYLIST_ENDPOINT = "me/playlists?limit=5"; //set number of playlists here
 function AUDIOANALYSIS_ENDPOINT(trackIDs) {
 	tracIDstr = ""; //TODO paginate this to a max of 90 songs to keep HTTP requests under 2048 chars
 	for (let i = 0; i < trackIDs.length; i++) {
@@ -18,32 +20,49 @@ function AUDIOANALYSIS_ENDPOINT(trackIDs) {
 			tracIDstr = tracIDstr.concat("%2C");
 		}
 	}
-	
 	return "audio-features" + "?ids=" + tracIDstr
 }
 function TRACKS_ENDPOINT(playlist_id) {
 	return "playlists/"+playlist_id+"/tracks";
 }
-
-
+function NEW_PLAYLIST_ENDPOINT(user_id) {
+	return "users/"+user_id+"/playlists";
+}
 
 //Derived Constants 
 const authURI = AUTH_BASE_URL + '?client_id='+client_id+"&response_type=token&redirect_uri="+login_redirect_route+"&scope="+scope;
 
 //Variables
 let ACCESS_TOKEN;
+var userID;
+var userName;
+
 var playlists; // = JSON.parse('[{"name":"[None]"}, {"name":"[None]"}, {"name":"[None]"}]') //To be populated 
 var playlist_id;
+var playlistName; // for adding to the new playlist
+var playlistDescription; // for adding to the new playlist
+var createdPlaylistID;
+var createdPlaylistName = "";
+
 var tracks;
 var trackIDs;
 var reorderedURIs;
 var trackAnalysis;
+
 var nextPlaylistPage = "";
+var previousPlaylistPage = "";
 var trackString = "";
 var visX = [], visY = [], visZ = [];
 const varX = "tempo", varY = "energy", varZ = "key";
 var reordered = false;
 var relativeOrder = []
+
+//Logo
+visX = [0,-6,-6,-1,-6,-6,0,5,5,6,5,5,1,5,5,6,5,5,0];
+visY = [1,6,4,0,-4,-6,-1,-6,-6.5,-5,-3.5,-4,0,4,3.5,5,6.5,6,1];
+visZ = [0,-6,-6,-1,-6,-6,0,5,5,6,5,5,1,5,5,6,5,5,0];
+
+// SOLVER
 
 function reorderPlaylist() {
 	//Define solver promise
@@ -76,21 +95,27 @@ function reorderPlaylist() {
 		return reorderedTracks
 		
 		*/
-		let uriList = [];
-		relativeOrder = [];
+		let uriList = []; 
+		let relativeOrderTMP = [];
 		let n = tracks.length-1;
+		for (let i = 0; i < tracks.length; i++) {
+			tracks[i]["used"] = false;
+		}
 		
-		song = tracks[0];
+		let startIndex = getRandomInt(0, n);
+		song = tracks[startIndex];
 		uriList.push(song["uri"]);
 		song["used"] = true; 
+
 		var distance;
 		var minDistance = 9999999999;
-		var nearestSong;
-		var nearestSongIndex = 0;
-		relativeOrder.push(0); //used to map new order to tracks array without sorting
-		
 
-		console.log(tracks);
+		var nearestSong;
+		var nearestSongIndex = startIndex;
+
+		relativeOrderTMP.push(startIndex); //used to map new order to tracks array without sorting
+		
+		// console.log(tracks);
 
 		for (let i = 1; i < tracks.length; i++) {
 			for (let j = 0; j < tracks.length; j++) {
@@ -110,24 +135,25 @@ function reorderPlaylist() {
 			uriList.push(nearestSong["uri"]);
 			song = nearestSong;	
 			tracks[nearestSongIndex]["used"] = true;
-			relativeOrder.push(nearestSongIndex);
+			relativeOrderTMP.push(nearestSongIndex);
 			minDistance = 9999999999;
 		} 
-
+		relativeOrder = relativeOrderTMP;
 		// Return success
 		resolve(uriList)
 	});
 
 	solver.then(function (uriList) {
 		reordered = true; //allow visualisation
-		console.log(uriList);
-		replaceTracks(uriList, playlist_id) //Pass to reorder
+		// console.log(uriList);
+		replaceTracks(uriList, createdPlaylistID) //Pass to reorder
 	}, function (error) {
 		console.log(error);
 	});
 
 }
 
+// API REQUESTS
 
 function getCurrentQueryParameters(delimiter = '#') {
 	// the access_token is passed back in a URL fragment, not a query string
@@ -137,11 +163,52 @@ function getCurrentQueryParameters(delimiter = '#') {
 	return params;
 }
 
-function replaceTracks(reorderedURIs, playlist_id) {	
+function createNewPlaylist() {	
+	//Skip create if this platlist already exists by name for a better UX
+	if (createdPlaylistName == playlistName + ".optimal") {
+		// Playlist exists, skip create step
+		reorderPlaylist(); //pass to reorder algorithm
+	} else {
+		//Create new playlist
+		const currentQueryParameters = getCurrentQueryParameters('#');
+		ACCESS_TOKEN = currentQueryParameters.get('access_token');
+
+		NEW_PLAYLIST_ENDPOINT_ID = NEW_PLAYLIST_ENDPOINT(userID);
+		createdPlaylistName = playlistName + ".optimal"
+		
+		let newPlaylistDescription = playlistDescription + " ~ Optimised by Smart Shuffle."
+		console.log(API_ENDPOINT + NEW_PLAYLIST_ENDPOINT_ID);
+		const fetchOptions = {
+			method: 'POST',
+			headers: new Headers({
+				'Authorization': `Bearer ${ACCESS_TOKEN}`,
+				'Content-Type': "application/json",
+				'Accept': "application/json"
+			}),
+			body: JSON.stringify({
+				"name": createdPlaylistName,
+				"description": newPlaylistDescription,
+				"public": true
+			})
+		};
+
+		fetch(API_ENDPOINT + NEW_PLAYLIST_ENDPOINT_ID, fetchOptions).then(function (response) {
+			return response.json();
+		}).then(function (json) {
+			createdPlaylistID = json["id"];
+			console.log(json);
+			reorderPlaylist(); //pass to reorder algorithm
+		}).catch(function (error) {
+			console.log(error);
+		});
+	}
+}
+
+function replaceTracks(reorderedURIs, createdPlaylistID) {	
 	const currentQueryParameters = getCurrentQueryParameters('#');
 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
 
-	TRACKS_ENDPOINT_ID = TRACKS_ENDPOINT(playlist_id);
+	TRACKS_ENDPOINT_ID = TRACKS_ENDPOINT(createdPlaylistID);
 
 	const fetchOptions = {
 		method: 'PUT',
@@ -186,7 +253,6 @@ function fetchTrackAnalysis(trackIDs) {
 
 		//create used attribute, log position
 		for (let i = 0; i < tracks.length; i++) {
-			tracks[i]["used"] = false;
 			visX.push(tracks[i]["analysis"][varX]);
 			visY.push(tracks[i]["analysis"][varY]);
 			visZ.push(tracks[i]["analysis"][varZ]);
@@ -203,8 +269,11 @@ function fetchPlaylistTracks(button_id) {
 	const currentQueryParameters = getCurrentQueryParameters('#');
 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
 
+	console.log(playlists[button_id]);
 	playlist_id = playlists[button_id]["id"];
-	console.log(playlist_id);
+	playlistName = playlists[button_id]["name"];
+	playlistDescription = playlists[button_id]["description"];
+
 	TRACKS_ENDPOINT_ID = TRACKS_ENDPOINT(playlist_id);
 
 	const fetchOptions = {
@@ -228,9 +297,10 @@ function fetchPlaylistTracks(button_id) {
 			trackString = trackString.concat(items[i]["track"]["name"] + "//")
 			//TODO pagination of analysis call here!
 		}
-	
-	//Update stong display
+		
+	//Update song display
 	document.getElementById("trackString").innerHTML = trackString;	
+	document.getElementById("warning").innerHTML = "⚠️ This will create a new playlist named " + playlists[button_id]["name"] + ".optimal"
 	fetchTrackAnalysis(trackIDs); //Call for analysis
 
 	}).catch(function (error) {
@@ -260,19 +330,14 @@ function fetchPlaylists(nextPlaylistPageURL = "") {
 		return response.json();
 	}).then(function (json) {
 		nextPlaylistPage = json["next"];
+		previousPlaylistPage = json["previous"];
 		playlists = json["items"];
+		fetchProfileInformation(); // Get user ID
 		renderPlaylists(playlists);
+		// console.log(json);
 	}).catch(function (error) {
 		console.log(error);
 	}); 
-}
-
-function renderPlaylists(playlists) {
-	console.log(playlists);
-	 //Set playlists
-	 document.getElementById("playlist0").innerHTML = playlists[0]["name"];
-	 document.getElementById("playlist1").innerHTML = playlists[1]["name"];
-	 document.getElementById("playlist2").innerHTML = playlists[2]["name"];
 }
 
 function updateProfileInformation(json) {
@@ -292,11 +357,13 @@ function fetchProfileInformation() {
 		})
 	};
 
-	fetch(API_ENDPOINT, fetchOptions).then(function (response) {
+	fetch(API_ENDPOINT + USER_ENDPOINT, fetchOptions).then(function (response) {
 		return response.json();
 	}).then(function (json) {
-		console.log(json);
-		updateProfileInformation(json);
+		// console.log(json);
+		userID = json["id"];
+		userName = json["name"];
+		// updateProfileInformation(json);
 	}).catch(function (error) {
 		console.log(error);
 	});
@@ -307,13 +374,14 @@ function fetchProfileInformation() {
 var boxSz;
 var x,y,z;
 var label;
+var fontSize;
 backgroundCol = [0,0,0];
 cubeLineCol = [255,255,255];
 songPointsCol = [0,255,0];
 
 let inconsolata;
 function preload() {
-  inconsolata = loadFont('assets/RobotoMono-Light.ttf');
+  inconsolata = loadFont('fonts/RobotoMono-Light.ttf');
 }
 
 function setup() {
@@ -322,19 +390,18 @@ function setup() {
 	var height = window.innerHeight-10;
 	var myCanvas = createCanvas(width, height, WEBGL);
     myCanvas.parent("graphic");
-	frameRate(12);
+	frameRate(24);
 	boxSz = Math.round(Math.min(height, width) / 4); //scale by bit to ensure that the cube fits even on diagonal
 
 	textFont(inconsolata);
-  	textSize(Math.round(boxSz/10));
+	fontSize = Math.round(boxSz/10);
+  	textSize(fontSize);
 }
 
 function draw() {
 	background(backgroundCol);
 	rotateY(frameCount * 0.01)
 	n = visX.length-1;
-	console.log(visX);
-	console.log(n);
 
 	stroke(cubeLineCol);
 
@@ -360,9 +427,13 @@ function draw() {
 	line(boxSz, boxSz, -boxSz, boxSz, boxSz, boxSz);
 
 	//labels
+	fill([255,255,255]);
 	label = varX + "/ " + varY + "/ " + varZ + "/ ";
-	text(label, -boxSz, -boxSz);
-
+	text(label, -boxSz, -boxSz-fontSize);
+	fill([0,255,0]);
+	text("start/", -boxSz, -boxSz);
+	fill([0,0,255]);
+	text("end/", -boxSz+fontSize*4, -boxSz);
 	// Points
 
 	maxX = Math.max(...visX);
@@ -374,11 +445,12 @@ function draw() {
 
 	stroke(songPointsCol);
 
-	console.log(reordered);
+	let inc = Math.round(255 / n);
+	let x1, y1, z1;
+
 	if (reordered) {
-		stroke([0,0,255]);
-		let x1, y1, z1;
-		for (var i = 0; i < n; i++) {
+		for (var i = 0; i <= n; i++) {
+			stroke([0,255 - i*inc,i*inc]);
 			tracksIndex = relativeOrder[i]
 			push();
 			x = map(visX[tracksIndex], minX, maxX, -boxSz, boxSz);
@@ -397,19 +469,44 @@ function draw() {
 				
 		}
 	} else {
-		for (var i = 0; i < n; i++) {
+		for (var i = 0; i <= n; i++) {
+			// stroke([255,i*inc, 0]);
+			stroke([0,255 - i*inc,i*inc]);
 			push();
 			x = map(visX[i], minX, maxX, -boxSz, boxSz);
 			y = map(visY[i], minY, maxY, -boxSz, boxSz);
 			z = map(visZ[i], minZ, maxZ, -boxSz, boxSz);
 			translate(x,y,z);
 			sphere(boxSz / 50, 8);
-			//labels
 			pop();	
+			//Lines
+			if (i > 0) {
+				line(x, y, z, x1, y1, z1);
+			}
+			x1 = x;
+			y1 = y;
+			z1 = z;
 		}
 	}
 }
 
+//UTILS
+
+function getRandomInt(min, max) {
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+}
+
+function renderPlaylists(playlists) {
+	// console.log(playlists);
+	 //Set playlists
+	 document.getElementById("playlist0").innerHTML = playlists[0]["name"];
+	 document.getElementById("playlist1").innerHTML = playlists[1]["name"];
+	 document.getElementById("playlist2").innerHTML = playlists[2]["name"];
+	 document.getElementById("playlist3").innerHTML = playlists[3]["name"];
+	 document.getElementById("playlist4").innerHTML = playlists[4]["name"];
+}
 
 // function getFormData(formId) {
 // 	const form = document.getElementById(formId);

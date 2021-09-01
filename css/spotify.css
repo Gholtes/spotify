@@ -1,0 +1,145 @@
+html, body {
+	margin: 0;
+	height: 100%;
+	width: 100%;
+	font-family: "Open Sans", "Helvetica", "Arial", sans-serif;
+	color: #EEEEEE;	
+	background: #000000;
+}
+
+h1,
+h2,
+h3,
+strong {
+  color: #EEEEEE;
+}
+
+td {
+	font-size: 12px;
+	color: #EEEEEE;	
+}
+
+a {
+	color: #005500;
+	cursor: cell;
+	text-decoration: none;
+    padding: 0 10px;
+    border-radius: 10px;
+    background: #EEEEEE;
+  }
+
+a:hover {
+	background: #00ff00;
+}
+
+.button {
+	background-color: #ffffff;
+	border: none;
+	color: black;
+	padding: 7px 7px;
+	border-radius: 20px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 12px;
+  }
+
+.button:hover {
+	background: #00ff00;
+}
+
+.playlistbutton {
+	background-color: black;
+	border: none;
+	color: white;
+	padding: 2px 2px;
+	border-radius: 2px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 12px;
+	text-decoration: underline;
+  }
+
+.playlistbutton:hover {
+	background: #00ff00;
+	color: black;
+}
+
+.loginbutton {
+	background-color: #ffffff;
+	border: none;
+	color: black;
+	padding: 10px 35px;
+	border-radius: 20px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 16px;
+  }
+
+.loginbutton:hover {
+	background: blue;
+}
+
+.reorderbutton {
+	background-color: #ffffff;
+	border: none;
+	color: black;
+	padding: 10px 35px;
+	border-radius: 20px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 16px;
+  }
+
+.reorderbutton:hover {
+	background: red;
+}
+
+
+.container {
+	margin-left: 5%;
+	width: 95%;
+	height: 100%;
+	background: #000000;
+	margin: auto;
+  }
+  
+.one {
+	width: 30%;
+	height: 100%;
+	background:#000000;
+	float: left;
+	overflow: scroll;
+}
+  
+.two {
+	margin-left: 30%;
+	height: 100%;
+	background: #000000;
+}
+
+.text {
+	margin-left:7px;
+	margin-right:10px;
+}
+
+.overlay {
+	position: fixed;
+	width: 100%;
+	height: 30%;
+	top: 70%;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 2;
+	font-size: 12px;
+}
+
+#trackString {
+	position:absolute;                 
+	bottom:0;                         
+	left:0;                         
+}
