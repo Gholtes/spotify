@@ -31,7 +31,7 @@ function NEW_PLAYLIST_ENDPOINT(user_id) {
 
 //Derived Constants 
 const authURI = AUTH_BASE_URL + '?client_id='+client_id+"&response_type=token&redirect_uri="+login_redirect_route+"&scope="+scope;
-
+const MAX_AUDIO_ANALYSIS_LENGTH = 80;
 //Variables
 let ACCESS_TOKEN;
 var userID;
@@ -146,6 +146,10 @@ function reorderPlaylist() {
 	solver.then(function (uriList) {
 		reordered = true; //allow visualisation
 		// console.log(uriList);
+		// for (let pageIndex = 0; pageIndex < trackIDs.length; pageIndex += MAX_AUDIO_ANALYSIS_LENGTH){
+		// 	// fetchTrackAnalysis(trackIDs, startIndex = pageIndex); //Call for analysis
+		// 	replaceTracks(uriList.slice(pageIndex, pageIndex+MAX_AUDIO_ANALYSIS_LENGTH), createdPlaylistID)
+		// }
 		replaceTracks(uriList, createdPlaylistID) //Pass to reorder
 	}, function (error) {
 		console.log(error);
@@ -177,7 +181,7 @@ function createNewPlaylist() {
 		createdPlaylistName = playlistName + ".optimal"
 		
 		let newPlaylistDescription = playlistDescription + " ~ Optimised by Smart Shuffle."
-		console.log(API_ENDPOINT + NEW_PLAYLIST_ENDPOINT_ID);
+		// console.log(API_ENDPOINT + NEW_PLAYLIST_ENDPOINT_ID);
 		const fetchOptions = {
 			method: 'POST',
 			headers: new Headers({
@@ -196,7 +200,7 @@ function createNewPlaylist() {
 			return response.json();
 		}).then(function (json) {
 			createdPlaylistID = json["id"];
-			console.log(json);
+			// console.log(json);
 			reorderPlaylist(); //pass to reorder algorithm
 		}).catch(function (error) {
 			console.log(error);
@@ -211,30 +215,58 @@ function replaceTracks(reorderedURIs, createdPlaylistID) {
 	TRACKS_ENDPOINT_ID = TRACKS_ENDPOINT(createdPlaylistID);
 
 	const fetchOptions = {
-		method: 'PUT',
+		method: 'POST',
 		headers: new Headers({
 			'Authorization': `Bearer ${ACCESS_TOKEN}`,
 			'Content-Type': "application/json",
 			'Accept': "application/json"
 		}),
-		body: JSON.stringify({"uris": reorderedURIs})
+		body: JSON.stringify({"uris": reorderedURIs.slice(0,MAX_AUDIO_ANALYSIS_LENGTH)})
 	};
 
 	fetch(API_ENDPOINT + TRACKS_ENDPOINT_ID, fetchOptions).then(function (response) {
 		return response.json();
 	}).then(function (json) {
-		console.log(json);
+		// console.log(json);
+		if (reorderedURIs.length > MAX_AUDIO_ANALYSIS_LENGTH){ //Recusive addition of max number of songs
+			replaceTracks(reorderedURIs.slice(MAX_AUDIO_ANALYSIS_LENGTH, reorderedURIs.length), createdPlaylistID) 
+		}
 	}).catch(function (error) {
 		console.log(error);
 	});
 }
 
-function fetchTrackAnalysis(trackIDs) {
+// function replaceTracks(reorderedURIs, createdPlaylistID) {	
+// 	const currentQueryParameters = getCurrentQueryParameters('#');
+// 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
+
+// 	TRACKS_ENDPOINT_ID = TRACKS_ENDPOINT(createdPlaylistID);
+
+// 	const fetchOptions = {
+// 		method: 'PUT',
+// 		headers: new Headers({
+// 			'Authorization': `Bearer ${ACCESS_TOKEN}`,
+// 			'Content-Type': "application/json",
+// 			'Accept': "application/json"
+// 		}),
+// 		body: JSON.stringify({"uris": reorderedURIs})
+// 	};
+
+// 	fetch(API_ENDPOINT + TRACKS_ENDPOINT_ID, fetchOptions).then(function (response) {
+// 		return response.json();
+// 	}).then(function (json) {
+// 		console.log(json);
+// 	}).catch(function (error) {
+// 		console.log(error);
+// 	});
+// }
+
+function fetchTrackAnalysis(trackIDs, startIndex = 0) {
 
 	const currentQueryParameters = getCurrentQueryParameters('#');
 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
 
-	ANALYSIS_ENDPOINT_ID = AUDIOANALYSIS_ENDPOINT(trackIDs);
+	ANALYSIS_ENDPOINT_ID = AUDIOANALYSIS_ENDPOINT(trackIDs.slice(startIndex, startIndex+MAX_AUDIO_ANALYSIS_LENGTH));
 
 	const fetchOptions = {
 		method: 'GET',
@@ -246,23 +278,20 @@ function fetchTrackAnalysis(trackIDs) {
 	fetch(API_ENDPOINT + ANALYSIS_ENDPOINT_ID, fetchOptions).then(function (response) {
 		return response.json();
 	}).then(function (json) {
-		//Add analysis to track data
-		for (let i = 0; i < tracks.length; i++) {
-			tracks[i]["analysis"] = json["audio_features"][i];
+		//Add analysis to track data, visualisation vectors
+		// console.log(json);
+		for (let i = 0; i < json["audio_features"].length; i++) {
+			tracks[i+startIndex]["analysis"] = json["audio_features"][i]; //Map any pages, 
+			visX[i+startIndex] = json["audio_features"][i][varX]; // TODO account for async return order!
+			visY[i+startIndex] = json["audio_features"][i][varY];
+			visZ[i+startIndex] = json["audio_features"][i][varZ];
 		} 
-
-		//create used attribute, log position
-		for (let i = 0; i < tracks.length; i++) {
-			visX.push(tracks[i]["analysis"][varX]);
-			visY.push(tracks[i]["analysis"][varY]);
-			visZ.push(tracks[i]["analysis"][varZ]);
-		}
 	}).catch(function (error) {
 		console.log(error);
 	});
 }
 
-function fetchPlaylistTracks(button_id) {
+function fetchPlaylistTracks(button_id, nextURL = "") {
 	visX = [], visY = [], visZ = []; //reset
 	reordered = false;
 
@@ -275,6 +304,15 @@ function fetchPlaylistTracks(button_id) {
 	playlistDescription = playlists[button_id]["description"];
 
 	TRACKS_ENDPOINT_ID = TRACKS_ENDPOINT(playlist_id);
+	let ENDPOINT
+	if (nextURL != "") {
+		ENDPOINT = nextURL;
+	} else { //NEW PLAYLIST, reset vars
+		ENDPOINT = API_ENDPOINT + TRACKS_ENDPOINT_ID;
+		trackString = "";
+		tracks = [];
+		trackIDs = [];
+	}
 
 	const fetchOptions = {
 		method: 'GET',
@@ -283,26 +321,42 @@ function fetchPlaylistTracks(button_id) {
 		})
 	};
 
-	fetch(API_ENDPOINT + TRACKS_ENDPOINT_ID, fetchOptions).then(function (response) {
+	fetch(ENDPOINT, fetchOptions).then(function (response) {
 		return response.json();
 	}).then(function (json) {
 		items = json["items"];
-		tracks = [];
-		var trackIDs = [];
-		trackString = "";
+		
 		//Parse JSON
 		for (let i = 0; i < items.length; i++) {
 			tracks.push(items[i]["track"])
 			trackIDs.push(items[i]["track"]["id"])
-			trackString = trackString.concat(items[i]["track"]["name"] + "//")
-			//TODO pagination of analysis call here!
+			if (trackString.length <= 2048) {
+				trackString = trackString.concat(items[i]["track"]["name"] + "//")
+			}
+
+			visX.push(0.0); // account for async return order by prepopulating
+			visY.push(0.0);
+			visZ.push(0.0);
 		}
 		
-	//Update song display
-	document.getElementById("trackString").innerHTML = trackString;	
-	document.getElementById("warning").innerHTML = "⚠️ This will create a new playlist named " + playlists[button_id]["name"] + ".optimal"
-	fetchTrackAnalysis(trackIDs); //Call for analysis
-
+		//Update song display
+		document.getElementById("trackString").innerHTML = trackString;	
+		document.getElementById("warning").innerHTML = "⚠️ This will create a new playlist named " + playlists[button_id]["name"] + ".optimal"
+		// for (let pageIndex = 0; pageIndex < trackIDs.length; pageIndex += MAX_AUDIO_ANALYSIS_LENGTH){
+		// 	console.log(trackIDs.slice(pageIndex,pageIndex+MAX_AUDIO_ANALYSIS_LENGTH));
+		// 	fetchTrackAnalysis(trackIDs, startIndex = pageIndex); //Call for analysis
+		// }
+		// fetchTrackAnalysis(trackIDs);
+		if (json["next"] != null) { //Load into next page recusivly 
+			fetchPlaylistTracks(button_id, nextURL = json["next"]);
+		} else {
+			// No more pages to load!
+			//LOAD SONG DATA
+			// console.log(trackIDs);
+			for (let pageIndex = 0; pageIndex < trackIDs.length; pageIndex += MAX_AUDIO_ANALYSIS_LENGTH){
+				fetchTrackAnalysis(trackIDs, startIndex = pageIndex); //Call for analysis
+			}
+		}
 	}).catch(function (error) {
 		console.log(error);
 	});
@@ -445,12 +499,12 @@ function draw() {
 
 	stroke(songPointsCol);
 
-	let inc = Math.round(255 / n);
+	let inc = 255.0 / n;
 	let x1, y1, z1;
 
 	if (reordered) {
 		for (var i = 0; i <= n; i++) {
-			stroke([0,255 - i*inc,i*inc]);
+			stroke([0, Math.round(255.0 - i*inc),Math.round(i*inc)]);
 			tracksIndex = relativeOrder[i]
 			push();
 			x = map(visX[tracksIndex], minX, maxX, -boxSz, boxSz);
@@ -470,8 +524,7 @@ function draw() {
 		}
 	} else {
 		for (var i = 0; i <= n; i++) {
-			// stroke([255,i*inc, 0]);
-			stroke([0,255 - i*inc,i*inc]);
+			stroke([0, Math.round(255.0 - i*inc),Math.round(i*inc)]);
 			push();
 			x = map(visX[i], minX, maxX, -boxSz, boxSz);
 			y = map(visY[i], minY, maxY, -boxSz, boxSz);
