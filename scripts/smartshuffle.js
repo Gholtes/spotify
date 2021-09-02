@@ -13,7 +13,7 @@ const USER_ENDPOINT = "me";
 const API_ENDPOINT = 'https://api.spotify.com/v1/';
 const PLAYLIST_ENDPOINT = "me/playlists?limit=5"; //set number of playlists here
 function AUDIOANALYSIS_ENDPOINT(trackIDs) {
-	tracIDstr = ""; //TODO paginate this to a max of 90 songs to keep HTTP requests under 2048 chars
+	tracIDstr = ""; 
 	for (let i = 0; i < trackIDs.length; i++) {
 		tracIDstr = tracIDstr.concat(trackIDs[i])
 		if (i < trackIDs.length-1) {
@@ -150,7 +150,7 @@ function reorderPlaylist() {
 		// 	// fetchTrackAnalysis(trackIDs, startIndex = pageIndex); //Call for analysis
 		// 	replaceTracks(uriList.slice(pageIndex, pageIndex+MAX_AUDIO_ANALYSIS_LENGTH), createdPlaylistID)
 		// }
-		replaceTracks(uriList, createdPlaylistID) //Pass to reorder
+		addTracks(uriList, createdPlaylistID) //Pass to reorder
 	}, function (error) {
 		console.log(error);
 	});
@@ -170,10 +170,11 @@ function getCurrentQueryParameters(delimiter = '#') {
 function createNewPlaylist() {	
 	//Skip create if this platlist already exists by name for a better UX
 	if (createdPlaylistName == playlistName + ".optimal") {
-		// Playlist exists, skip create step
-		reorderPlaylist(); //pass to reorder algorithm
+		// Playlist exists, skip create step but delete current songs
+		ClearThenAddTracks(createdPlaylistID);
+		 // then pass to reorder algorithm, which is done in ClearThenAddTracks()
 	} else {
-		//Create new playlist
+		//Create new playlist, then pass to reorder algorithm
 		const currentQueryParameters = getCurrentQueryParameters('#');
 		ACCESS_TOKEN = currentQueryParameters.get('access_token');
 
@@ -208,7 +209,7 @@ function createNewPlaylist() {
 	}
 }
 
-function replaceTracks(reorderedURIs, createdPlaylistID) {	
+function addTracks(reorderedURIs, createdPlaylistID) {	
 	const currentQueryParameters = getCurrentQueryParameters('#');
 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
 
@@ -229,12 +230,38 @@ function replaceTracks(reorderedURIs, createdPlaylistID) {
 	}).then(function (json) {
 		// console.log(json);
 		if (reorderedURIs.length > MAX_AUDIO_ANALYSIS_LENGTH){ //Recusive addition of max number of songs
-			replaceTracks(reorderedURIs.slice(MAX_AUDIO_ANALYSIS_LENGTH, reorderedURIs.length), createdPlaylistID) 
+			addTracks(reorderedURIs.slice(MAX_AUDIO_ANALYSIS_LENGTH, reorderedURIs.length), createdPlaylistID) 
 		}
 	}).catch(function (error) {
 		console.log(error);
 	});
 }
+
+function ClearThenAddTracks(createdPlaylistID) {	
+		const currentQueryParameters = getCurrentQueryParameters('#');
+		ACCESS_TOKEN = currentQueryParameters.get('access_token');
+	
+		TRACKS_ENDPOINT_ID = TRACKS_ENDPOINT(createdPlaylistID);
+	
+		const fetchOptions = {
+			method: 'PUT',
+			headers: new Headers({
+				'Authorization': `Bearer ${ACCESS_TOKEN}`,
+				'Content-Type': "application/json",
+				'Accept': "application/json"
+			}),
+			body: JSON.stringify({"uris": []})
+		};
+	
+		fetch(API_ENDPOINT + TRACKS_ENDPOINT_ID, fetchOptions).then(function (response) {
+			return response.json();
+		}).then(function (json) {
+			reorderPlaylist(); //pass to reorder
+			// console.log(json);
+		}).catch(function (error) {
+			console.log(error);
+		});
+	}
 
 // function replaceTracks(reorderedURIs, createdPlaylistID) {	
 // 	const currentQueryParameters = getCurrentQueryParameters('#');
@@ -282,7 +309,7 @@ function fetchTrackAnalysis(trackIDs, startIndex = 0) {
 		// console.log(json);
 		for (let i = 0; i < json["audio_features"].length; i++) {
 			tracks[i+startIndex]["analysis"] = json["audio_features"][i]; //Map any pages, 
-			visX[i+startIndex] = json["audio_features"][i][varX]; // TODO account for async return order!
+			visX[i+startIndex] = json["audio_features"][i][varX]; //Accounts for async API returns
 			visY[i+startIndex] = json["audio_features"][i][varY];
 			visZ[i+startIndex] = json["audio_features"][i][varZ];
 		} 
