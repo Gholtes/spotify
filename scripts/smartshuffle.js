@@ -263,31 +263,6 @@ function ClearThenAddTracks(createdPlaylistID) {
 		});
 	}
 
-// function replaceTracks(reorderedURIs, createdPlaylistID) {	
-// 	const currentQueryParameters = getCurrentQueryParameters('#');
-// 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
-
-// 	TRACKS_ENDPOINT_ID = TRACKS_ENDPOINT(createdPlaylistID);
-
-// 	const fetchOptions = {
-// 		method: 'PUT',
-// 		headers: new Headers({
-// 			'Authorization': `Bearer ${ACCESS_TOKEN}`,
-// 			'Content-Type': "application/json",
-// 			'Accept': "application/json"
-// 		}),
-// 		body: JSON.stringify({"uris": reorderedURIs})
-// 	};
-
-// 	fetch(API_ENDPOINT + TRACKS_ENDPOINT_ID, fetchOptions).then(function (response) {
-// 		return response.json();
-// 	}).then(function (json) {
-// 		console.log(json);
-// 	}).catch(function (error) {
-// 		console.log(error);
-// 	});
-// }
-
 function fetchTrackAnalysis(trackIDs, startIndex = 0) {
 
 	const currentQueryParameters = getCurrentQueryParameters('#');
@@ -367,7 +342,9 @@ function fetchPlaylistTracks(button_id, nextURL = "") {
 		}
 		
 		//Update song display
-		document.getElementById("trackString").innerHTML = trackString;	
+		document.getElementById("trackString").innerHTML = trackString;
+		// Show display items	
+		show("optimiseButtonElement");
 		document.getElementById("warning").innerHTML = "⚠️ This will create a new playlist named " + playlists[button_id]["name"] + ".optimal"
 		// for (let pageIndex = 0; pageIndex < trackIDs.length; pageIndex += MAX_AUDIO_ANALYSIS_LENGTH){
 		// 	console.log(trackIDs.slice(pageIndex,pageIndex+MAX_AUDIO_ANALYSIS_LENGTH));
@@ -415,6 +392,8 @@ function fetchPlaylists(nextPlaylistPageURL = "") {
 		playlists = json["items"];
 		fetchProfileInformation(); // Get user ID
 		renderPlaylists(playlists);
+		show("playlistTable");
+		show("playlistControlTable");
 		// console.log(json);
 	}).catch(function (error) {
 		console.log(error);
@@ -588,6 +567,26 @@ function renderPlaylists(playlists) {
 	 document.getElementById("playlist4").innerHTML = playlists[4]["name"];
 }
 
+function hideAllOnStartup() {
+	//Set visibilities on load
+	let elem = document.getElementById("fetchPlaylistsButtonElement");
+	elem.style.visibility='hidden';
+
+	elem = document.getElementById("playlistTable");
+	elem.style.visibility='hidden';
+
+	elem = document.getElementById("playlistControlTable");
+	elem.style.visibility='hidden';
+	
+	elem = document.getElementById("optimiseButtonElement");
+	elem.style.visibility='hidden';
+}
+
+function show(id) {
+	//Set visibilities on load
+	let elem = document.getElementById(id);
+	elem.style.visibility='visible';
+}
 // function getFormData(formId) {
 // 	const form = document.getElementById(formId);
 // 	const formData = new FormData(form);

@@ -42,11 +42,11 @@
 
             <br><br>
 
-            <form>  
+            <form id=fetchPlaylistsButtonElement>  
                 <input type = "button" class="button" onclick = "fetchPlaylists()" value = "Load my playlists">   
             </form>    
 
-            <table>
+            <table id=playlistTable>
                 <tr> 
                     <td>
                         <form>  
@@ -94,7 +94,7 @@
                     
             </table>
 
-            <table>
+            <table id=playlistControlTable>
                 <tr> 
                     <td>
                         <form>  
@@ -110,7 +110,7 @@
             </table>
 
             <br>
-            <form>  
+            <form id=optimiseButtonElement>  
                 <input type = "button" class="reorderbutton" onclick = "createNewPlaylist()" value = "Optimise">   
             </form> 
             <br>
@@ -131,6 +131,14 @@
 
     <script>
         document.getElementById("loginLink").setAttribute("href",authURI);
+        hideAllOnStartup();
+        //Check if user has logged in
+        const currentQueryParameters = getCurrentQueryParameters('#');
+		ACCESS_TOKEN = currentQueryParameters.get('access_token');
+        var loggedIn = ACCESS_TOKEN.length > 1;
+        if (loggedIn) {
+            show("fetchPlaylistsButtonElement")
+        }
     </script>
 
 </body>
