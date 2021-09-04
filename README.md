@@ -1,14 +1,16 @@
 # Smart Shuffle
 ### Grant Holtes 2021
-Reorder playlists to minimise the differneces between songs based on Spotify audio analysis data. This is entriely done on the frontend, with no backend required or used.
+Reorder playlists to minimise the differences between songs based on Spotify audio analysis data. This is entirely done on the frontend, with no backend required or used.
 
+Try it here: [grantholtes.com/smartshuffle](www.grantholtes.com/smartshuffle])
+ 
 This involves 3 key steps:
-* Access the users playlists, tracks and track analysis
-* Find a optimal order for the tracks
-* Reorder the user's playlist in the optimal order
-
-Its also neat to visualise this analysis data that is usualy hidden from the user, so there is also a 3D graphic that is rendered on the fly as more data is gathered.
-
+1. Access the users playlists, tracks and track analysis
+2. Find a optimal order for the tracks
+3. Create a new playlist with the tracks in this optimal order
+ 
+Its also neat to visualise this audio analysis data that is usually hidden from the user, so there is also a 3D graphic that is rendered on the fly as more data is gathered.
+ 
 ## Background
 Spotify is a fantastic service which has drastically changed how we find, listen and share music. Their tech forward approach has also allowed new features to be  released that further elevate their user’s ability to interact with their music, such as the ‘discover weekly’ playlist or the recently released [blend](https://newsroom.spotify.com/2021-08-31/how-spotifys-newest-personalized-experience-blend-creates-a-playlist-for-you-and-your-bestie/) tool that merges two people’s music tastes into a single playlist. 
 
