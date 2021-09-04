@@ -67,6 +67,13 @@ Instead an approximate solution is used, in this case a simple nearest neighbour
 3. Set the current point to be the nearest point, and append it to the output array and mark it as seen.
 4. Return the output array
 
+#### Diagram
+![nearest neighbours approach, credit Saurabh Harsh (https://en.wikipedia.org/wiki/Travelling_salesman_problem#/media/File:Nearestneighbor.gif)](Images/Nearestneighbor.gif "nearest neighbours approach, showing how each start point yields its own solution")
+
+Credit to Saurabh Harsh (https://en.wikipedia.org/wiki/Travelling_salesman_problem#/media/File:Nearestneighbor.gif)
+
+This greedy approach is far from optimal, but is significantly faster and simpler than competing approaches, and is well suited to this application where speed is preferred over an exact solution. An additional perk of this method is that every starting point yields a slightly different approximate solution, which allows the user to shuffle between approximately optimal solutions by simply recomputing the solution, given that the starting point is randomly chosen. When this is combined with a visualisation of the solution, it allows the user to pick the solution they like the look of best. 
+
 #### Pseudocode 
 ```
 reorderedTracks = Array
@@ -86,11 +93,3 @@ for i=1 to length tracks:
 
 return reorderedTracks
 ```
-
-#### Diagram
-![nearest neighbours approach, credit Saurabh Harsh (https://en.wikipedia.org/wiki/Travelling_salesman_problem#/media/File:Nearestneighbor.gif)](Images/Nearestneighbor.gif "nearest neighbours approach, showing how each start point yields its own solution")
-
-Credit to Saurabh Harsh (https://en.wikipedia.org/wiki/Travelling_salesman_problem#/media/File:Nearestneighbor.gif)
-
-This greedy approach is far from optimal, but is significantly faster and simpler than competing approaches, and is well suited to this application where speed is preferred over an exact solution. An additional perk of this method is that every starting point yields a slightly different approximate solution, which allows the user to shuffle between approximately optimal solutions by simply recomputing the solution, given that the starting point is randomly chosen. When this is combined with a visualisation of the solution, it allows the user to pick the solution they like the look of best. 
-
