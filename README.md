@@ -4,7 +4,7 @@ Reorder playlists to minimise the differences between songs based on Spotify aud
 
 #### Try it here: [grantholtes.com/smartshuffle](www.grantholtes.com/smartshuffle])
 
-["Logo"](Images/mainLogo.png)
+!["Logo"](Images/mainLogo.png)
  
 This involves 3 key steps:
 1. Access the users playlists, tracks and track analysis
