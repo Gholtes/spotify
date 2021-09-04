@@ -62,12 +62,35 @@ Finding an exact solution to the TSP is a famously NP-hard problem, which requir
 
 Instead an approximate solution is used, in this case a simple nearest neighbours approach is used which has a complexity of O(n squared). 
 
-Select a point. Append the point to the output array and mark it as seen.
-While there are unseen points, find the nearest point by looping over all unseen points and measuring the distance from the current point to the other point. 
-Set the current point to be the nearest point, and append it to the output array and mark it as seen.
-Return the output array
+1. Select a point. Append the point to the output array and mark it as seen.
+2. While there are unseen points, find the nearest point by looping over all unseen points and measuring the distance from the current point to the other point. 
+3. Set the current point to be the nearest point, and append it to the output array and mark it as seen.
+4. Return the output array
 
+#### Pseudocode 
+```
+reorderedTracks = Array
+song = tracks[randomBetween(0,n-1)]
+currentMin = inf.
+reorderedTracks.push(song)
+
+for i=1 to length tracks:
+    NearestSong = None
+    for nextSong in tracks:
+        if nextSong not yet seen:
+            calculate distance(song, nextSong)
+            if distance < currentMin:
+                NearestSong = nextSong
+    reorderedTracks.push(NearestSong)
+    song = NearestSong
+
+return reorderedTracks
+```
+
+#### Diagram
 ![nearest neighbours approach, credit Saurabh Harsh (https://en.wikipedia.org/wiki/Travelling_salesman_problem#/media/File:Nearestneighbor.gif)](Images/Nearestneighbor.gif "nearest neighbours approach, showing how each start point yields its own solution")
+
+Credit to Saurabh Harsh (https://en.wikipedia.org/wiki/Travelling_salesman_problem#/media/File:Nearestneighbor.gif)
 
 This greedy approach is far from optimal, but is significantly faster and simpler than competing approaches, and is well suited to this application where speed is preferred over an exact solution. An additional perk of this method is that every starting point yields a slightly different approximate solution, which allows the user to shuffle between approximately optimal solutions by simply recomputing the solution, given that the starting point is randomly chosen. When this is combined with a visualisation of the solution, it allows the user to pick the solution they like the look of best. 
 
