@@ -6,7 +6,8 @@ Reorder playlists to minimise the differences between songs based on Spotify aud
 
 !["Logo"](Images/mainLogo.png)
  
-This involves 3 key steps:
+#### High level process
+There are 3 key steps:
 1. Access the users playlists, tracks and track analysis
 2. Find a optimal order for the tracks
 3. Create a new playlist with the tracks in this optimal order
@@ -51,3 +52,22 @@ For my applications I have chosen to use the “implicit grant” method as I do
 Due to the large number of playlists and songs a user may have, all of the used API calls have a maximum return length as well as pagination to get the next chunk of data if any exists. This keeps the size of each api call manageable, especially when the data is contained within the URL parameters rather than headers, and so is subject to the strict character limits by browser. 
 
 ## Order optimisation
+User’s spotify playlists tend to be chronologically organised by the date when a song is added, which does not typically lead to a well ordered playback. When seeking to improve this order, it helps to reframe the problem as “what order should we play the songs such that every subsequent song is acceptably similar to the previous song”. 
+
+It is easy to determine how similar two songs are given the Spotify audio analysis data, which includes measurements of tempo, key, as well as more subjective measures such as “danceability” and “acousticness” which capture the sound and mood of the song. If a set of these measures are stored as vectors for each song, the similarity between songs can be quantified as the distance between these vectors. Two songs that are nearby as measure by their vectors should have a similar BPM, key and general mood, while songs that are further apart may be very different and so unsuitable to play back-to-back.
+
+The task of ordering the songs of the playlist to minimise the sum of the distance between sequential songs is verison of the [traveling salesman problem, TSP](https://en.wikipedia.org/wiki/Travelling_salesman_problem), which seeks find a route between cities that minimise the total distance traveled. The only major difference is that instead of a 2D space, we have an arbitrary number of dimensions.
+
+Finding an exact solution to the TSP is a famously NP-hard problem, which requires an infeasible amount of computational power for larger numbers of data points. The complexity of the TSP is O(n!), which becomes impractical beyond ~20 data points, and even optimised versions are impractical beyond ~50 data points.  As we don’t know how long a user’s playlist may be, seeking an exact solution is unacceptable. 
+
+Instead an approximate solution is used, in this case a simple nearest neighbours approach is used which has a complexity of O(n squared). 
+
+Select a point. Append the point to the output array and mark it as seen.
+While there are unseen points, find the nearest point by looping over all unseen points and measuring the distance from the current point to the other point. 
+Set the current point to be the nearest point, and append it to the output array and mark it as seen.
+Return the output array
+
+![nearest neighbours approach, credit Saurabh Harsh (https://en.wikipedia.org/wiki/Travelling_salesman_problem#/media/File:Nearestneighbor.gif)](Images/Nearestneighbor.gif "nearest neighbours approach, showing how each start point yields its own solution")
+
+This greedy approach is far from optimal, but is significantly faster and simpler than competing approaches, and is well suited to this application where speed is preferred over an exact solution. An additional perk of this method is that every starting point yields a slightly different approximate solution, which allows the user to shuffle between approximately optimal solutions by simply recomputing the solution, given that the starting point is randomly chosen. When this is combined with a visualisation of the solution, it allows the user to pick the solution they like the look of best. 
+
