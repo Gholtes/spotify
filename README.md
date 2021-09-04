@@ -2,7 +2,7 @@
 ### Grant Holtes 2021
 Reorder playlists to minimise the differences between songs based on Spotify audio analysis data. This is entirely done on the frontend, with no backend required or used.
 
-Try it here: [grantholtes.com/smartshuffle](www.grantholtes.com/smartshuffle])
+#### Try it here: [grantholtes.com/smartshuffle](www.grantholtes.com/smartshuffle])
  
 This involves 3 key steps:
 1. Access the users playlists, tracks and track analysis
