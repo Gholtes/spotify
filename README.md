@@ -24,6 +24,7 @@ To avoid this fate for my own playlists, I have started to build solutions to th
 ## Spotify access
 Spotify offers a free Web API that allows you to programmatically access various aspects of Spotify and modify parts of a user’s account - given their permission at least!
 
+### Web API
 I want to be able to access a user’s playlists and tracks within, as well as be able to modify these playlists or create new ones. This requires 4 key abilities:
 * Ability to list all of a users playlists
 * Ability to list the tracks within a playlist
@@ -37,5 +38,14 @@ For reference, the required playlist level interactions are contained within the
 The basic flow can be summarized as below:
 ![API flow](Images/apiFlowUML.png "API flow with the Spotify Web API")
 
+### Authorisation  
+For any of the API features to be useful, the user must be logged in as a valid spotify user. Spotify provides a number of ways for a user to log in and provide the application with the required authorisation to access their data and make changes. 
+
+For my applications I have chosen to use the “implicit grant” method as I do not need long-term persistent authorisation and as implicit grant authorisation allows the application to be front-end only. This flow provides the application with a token that is then used in all subsequent API calls.
+
+![Implicit grant](Images/implictGrantUML.png "Implicit grant flow with the Spotify Web API")
+
+### Pagination 
+Due to the large number of playlists and songs a user may have, all of the used API calls have a maximum return length as well as pagination to get the next chunk of data if any exists. This keeps the size of each api call manageable, especially when the data is contained within the URL parameters rather than headers, and so is subject to the strict character limits by browser. 
 
 ## Order optimisation
