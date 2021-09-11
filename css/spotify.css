@@ -2,7 +2,7 @@ html, body {
 	margin: 0;
 	height: 100%;
 	width: 100%;
-	font-family: "Open Sans", "Helvetica", "Arial", sans-serif;
+	font-family: sans-serif;
 	color: #EEEEEE;	
 	background: #000000;
 }
@@ -20,15 +20,19 @@ td {
 }
 
 a {
-	color: #005500;
-	text-decoration: none;
-    padding: 0 10px;
-    border-radius: 10px;
-    background: #EEEEEE;
+	color: #FFFFFF;
   }
 
 a:hover {
-	background: #00ff00;
+	color: #00ff00;
+}
+
+img {
+	display: block;
+	max-width:100%;
+	max-height:100%;
+	width: auto;
+	height: auto;
 }
 
 .button {
@@ -79,6 +83,7 @@ a:hover {
 
 .loginbutton:hover {
 	background: blue;
+	color: black;
 }
 
 .reorderbutton {
@@ -125,20 +130,51 @@ a:hover {
 	margin-right:10px;
 }
 
-.overlay {
-	position: fixed;
-	width: 100%;
-	height: 30%;
-	top: 70%;
-	left: 0;
+
+.overlay{
+	position: absolute;
+	width: 70%;
+	height: 25%;
+	top: 75%;
+	left: 30%;
 	right: 0;
 	bottom: 0;
+	z-index: 3;
+	overflow: scroll;
+}
+
+
+.LogoOverlay {
+	position: fixed;
+	width: 10%;
+	height: 10%;
+	top: 2%;
+	left: 88%;
+	right: 2%;
+	bottom: 88%;
 	z-index: 2;
-	font-size: 12px;
+}
+
+.footerOverlay {
+	position: fixed;
+	width: 20%;
+	height: 20px;
+	left: 5px;
+	bottom: 5px;
+	z-index: 2;
+	font-size: 11px;
 }
 
 #trackString {
 	position:absolute;                 
 	bottom:0;                         
 	left:0;                         
+}
+
+.singleColumn {
+	position: absolute;
+	width: 50%;
+	left: 25%;
+	right: 25%;
+	overflow: scroll;
 }

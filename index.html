@@ -33,10 +33,12 @@
         <div class="one">
             <h1>Smart Shuffle</h1>
             Spotify playlist order optimisation tool: 
-            Log in to rearrange your public playlists according to BPM, key and mood. <br>
-            Grant Holtes | 2021
-
+            Log in to rearrange your public playlists according to BPM, key and mood. 
             <br><br>
+            <i>Powered by Spotify</i>
+            <br>
+            
+            <br>
 
             <a id="loginLink" class="loginbutton" >Login</a>
 
@@ -50,7 +52,7 @@
                 <tr> 
                     <td>
                         <form>  
-                            <input type = "button" class="playlistbutton"  onclick = "fetchPlaylistTracks(0)" value = "Select >>">   
+                            <input type = "button" class="playlistbutton" id="playlistbutton0" onclick = "fetchPlaylistTracks(0)" value = "> Select <">   
                         </form> 
                     </td> 
                     <td id="playlist0"></td>
@@ -59,7 +61,7 @@
                 <tr>
                     <td>
                         <form>  
-                            <input type = "button" class="playlistbutton"  onclick = "fetchPlaylistTracks(1)" value = "Select >>">   
+                            <input type = "button" class="playlistbutton"  onclick = "fetchPlaylistTracks(1)" value = "> Select <">   
                         </form> 
                     </td> 
                     <td id="playlist1"></td>
@@ -68,7 +70,7 @@
                 <tr>
                     <td>
                             <form>  
-                                <input type = "button" class="playlistbutton" onclick = "fetchPlaylistTracks(2)" value = "Select >>">   
+                                <input type = "button" class="playlistbutton" onclick = "fetchPlaylistTracks(2)" value = "> Select <">   
                             </form> 
                     </td> 
                     <td id="playlist2"></td>
@@ -77,7 +79,7 @@
                 <tr>
                     <td>
                             <form>  
-                                <input type = "button" class="playlistbutton" onclick = "fetchPlaylistTracks(3)" value = "Select >>">   
+                                <input type = "button" class="playlistbutton" onclick = "fetchPlaylistTracks(3)" value = "> Select <">   
                             </form> 
                     </td> 
                     <td id="playlist3"></td>
@@ -86,7 +88,7 @@
                 <tr>
                     <td>
                             <form>  
-                                <input type = "button" class="playlistbutton" onclick = "fetchPlaylistTracks(4)" value = "Select >>">   
+                                <input type = "button" class="playlistbutton" onclick = "fetchPlaylistTracks(4)" value = "> Select <">   
                             </form> 
                     </td> 
                     <td id="playlist4"></td>
@@ -125,9 +127,21 @@
     </section>
 
     <div class="overlay">
-        <!-- track str -->
-        <p id="trackString"></p>
+        <div id = trackdiv>        
+        </div>
+            <!-- track str -->
+            <!-- <p id="trackString">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p> -->
     </div>
+    
+
+    <div class="LogoOverlay"> 
+        <img src="assets/Spotify_Logo_RGB_Green.png" alt="Spotify icon and name in Spotify branding">
+    </div>
+
+    <div class="footerOverlay"> 
+        <a href="/datausage.html">Privacy Policy</a>
+    </div>
+    
 
     <script>
         document.getElementById("loginLink").setAttribute("href",authURI);

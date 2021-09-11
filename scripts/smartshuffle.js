@@ -20,7 +20,7 @@ function AUDIOANALYSIS_ENDPOINT(trackIDs) {
 			tracIDstr = tracIDstr.concat("%2C");
 		}
 	}
-	return "audio-features" + "?ids=" + tracIDstr
+	return "audio-features" + "?ids=" + tracIDstr;
 }
 function TRACKS_ENDPOINT(playlist_id) {
 	return "playlists/"+playlist_id+"/tracks";
@@ -300,7 +300,7 @@ function fetchPlaylistTracks(button_id, nextURL = "") {
 	const currentQueryParameters = getCurrentQueryParameters('#');
 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
 
-	console.log(playlists[button_id]);
+	// console.log(playlists[button_id]);
 	playlist_id = playlists[button_id]["id"];
 	playlistName = playlists[button_id]["name"];
 	playlistDescription = playlists[button_id]["description"];
@@ -332,17 +332,17 @@ function fetchPlaylistTracks(button_id, nextURL = "") {
 		for (let i = 0; i < items.length; i++) {
 			tracks.push(items[i]["track"])
 			trackIDs.push(items[i]["track"]["id"])
-			if (trackString.length <= 2048) {
-				trackString = trackString.concat(items[i]["track"]["name"] + "//")
-			}
-
 			visX.push(0.0); // account for async return order by prepopulating
 			visY.push(0.0);
 			visZ.push(0.0);
 		}
+
+		
 		
 		//Update song display
-		document.getElementById("trackString").innerHTML = trackString;
+		document.getElementById("trackdiv").innerHTML = ""; // Clear existing text if it exists
+		renderTracks(items); // Render track string
+		
 		// Show display items	
 		show("optimiseButtonElement");
 		document.getElementById("warning").innerHTML = "⚠️ This will create a new playlist named " + playlists[button_id]["name"] + ".optimal"
@@ -558,13 +558,79 @@ function getRandomInt(min, max) {
 }
 
 function renderPlaylists(playlists) {
+	// Clear nodes
+	document.getElementById("playlist0").innerHTML = "";
+	document.getElementById("playlist1").innerHTML = "";
+	document.getElementById("playlist2").innerHTML = "";
+	document.getElementById("playlist3").innerHTML = "";
+	document.getElementById("playlist4").innerHTML = "";
+
+	document.getElementById("playlist0").innerHTML = playlists[0]["name"] + " | ";
+	document.getElementById("playlist1").innerHTML = playlists[1]["name"] + " | ";
+	document.getElementById("playlist2").innerHTML = playlists[2]["name"] + " | ";
+	document.getElementById("playlist3").innerHTML = playlists[3]["name"] + " | ";
+	document.getElementById("playlist4").innerHTML = playlists[4]["name"] + " | ";
 	// console.log(playlists);
-	 //Set playlists
-	 document.getElementById("playlist0").innerHTML = playlists[0]["name"];
-	 document.getElementById("playlist1").innerHTML = playlists[1]["name"];
-	 document.getElementById("playlist2").innerHTML = playlists[2]["name"];
-	 document.getElementById("playlist3").innerHTML = playlists[3]["name"];
-	 document.getElementById("playlist4").innerHTML = playlists[4]["name"];
+	//Set playlists
+	let title = "PLAY ON SPOTIFY";
+	let linkText = "Play on Spotify";
+
+	 a = createLinkNode(linkText, title, playlists[0]["external_urls"]["spotify"])
+	 document.getElementById("playlist0").appendChild(a);
+ 
+	 a = createLinkNode(linkText, title, playlists[1]["external_urls"]["spotify"])
+	 document.getElementById("playlist1").appendChild(a);
+ 
+	 a = createLinkNode(linkText, title, playlists[2]["external_urls"]["spotify"])
+	 document.getElementById("playlist2").appendChild(a);
+ 
+	 a = createLinkNode(linkText, title, playlists[3]["external_urls"]["spotify"])
+	 document.getElementById("playlist3").appendChild(a);
+ 
+	 a = createLinkNode(linkText, title, playlists[4]["external_urls"]["spotify"])
+	 document.getElementById("playlist4").appendChild(a);
+	// let title = "PLAY ON SPOTIFY";
+
+	// a = createLinkNode(playlists[0]["name"], title, playlists[0]["external_urls"]["spotify"])
+	// document.getElementById("playlist0").appendChild(a);
+
+	// a = createLinkNode(playlists[1]["name"], title, playlists[1]["external_urls"]["spotify"])
+	// document.getElementById("playlist1").appendChild(a);
+
+	// a = createLinkNode(playlists[2]["name"], title, playlists[2]["external_urls"]["spotify"])
+	// document.getElementById("playlist2").appendChild(a);
+
+	// a = createLinkNode(playlists[3]["name"], title, playlists[3]["external_urls"]["spotify"])
+	// document.getElementById("playlist3").appendChild(a);
+
+	// a = createLinkNode(playlists[4]["name"], title, playlists[4]["external_urls"]["spotify"])
+	// document.getElementById("playlist4").appendChild(a);
+	
+	// document.getElementById("playlist0").innerHTML = playlists[0]["name"];
+	// document.getElementById("playlist1").innerHTML = playlists[1]["name"];
+	// document.getElementById("playlist2").innerHTML = playlists[2]["name"];
+	// document.getElementById("playlist3").innerHTML = playlists[3]["name"];
+	// document.getElementById("playlist4").innerHTML = playlists[4]["name"];
+}
+
+function createLinkNode(text, title, href){
+	var a = document.createElement('a');
+	var linkText = document.createTextNode(text);
+	a.appendChild(linkText);
+	a.title = title;
+	a.target = "_blank";
+	a.href = href;
+	return a;
+}
+
+function renderTracks(items) {
+	for (let i = 0; i < items.length; i++) {
+		let text = items[i]["track"]["name"] + ", " + items[i]["track"]["artists"][0]["name"]+" //";
+		let title = "LISTEN ON SPOTIFY";
+		let href = items[i]["track"]["external_urls"]["spotify"];
+		a = createLinkNode(text, title, href);
+      	document.getElementById("trackdiv").appendChild(a); 
+	}
 }
 
 function hideAllOnStartup() {
@@ -587,69 +653,3 @@ function show(id) {
 	let elem = document.getElementById(id);
 	elem.style.visibility='visible';
 }
-// function getFormData(formId) {
-// 	const form = document.getElementById(formId);
-// 	const formData = new FormData(form);
-// 	return formData;
-// };
-
-// const AUTH_BASE_URL = 'https://accounts.spotify.com/authorize';
-// const API_ENDPOINT = 'https://api.spotify.com/v1/me';
-// let ACCESS_TOKEN;
-
-// function formDataToParams(formData) {
-// 	const params = new URLSearchParams('');
-// 	for (let [key, value] of formData.entries()) {
-// 		params.set(key, value)
-// 	}
-// 	return params;
-// }
-
-// function getCurrentQueryParameters(delimiter = '#') {
-// 	// the access_token is passed back in a URL fragment, not a query string
-// 	// errors, on the other hand are passed back in a query string
-// 	const currentLocation = String(window.location).split(delimiter)[1];
-// 	const params = new URLSearchParams(currentLocation);
-// 	return params;
-// }
-
-// function buildAuthLink() {
-// 	const params = formDataToParams(getFormData('main_form'));
-// 	const authURI = AUTH_BASE_URL + '?' + params;
-// 	const authLinkAnchor = document.querySelector('a#auth_link');
-// 	authLinkAnchor.setAttribute('href', authURI);
-// 	authLinkAnchor.textContent = authURI;
-// }
-
-// function updateProfileInformation(json) {
-// 	const infoString = `username: ${json.id} has ${json.followers.total} follower(s) on Spotify`;
-// 	const profileInfoElement = document.querySelector('#profile_info');
-// 	profileInfoElement.textContent = infoString;
-// }
-
-// function fetchProfileInformation() {
-// 	const currentQueryParameters = getCurrentQueryParameters('#');
-// 	ACCESS_TOKEN = currentQueryParameters.get('access_token');
-
-// 	const fetchOptions = {
-// 		method: 'GET',
-// 		headers: new Headers({
-// 			'Authorization': `Bearer ${ACCESS_TOKEN}`
-// 		})
-// 	};
-
-// 	fetch(API_ENDPOINT, fetchOptions).then(function (response) {
-// 		return response.json();
-// 	}).then(function (json) {
-// 		console.log(json);
-// 		updateProfileInformation(json);
-// 	}).catch(function (error) {
-// 		console.log(error);
-// 	});
-// }
-
-// const buildButton = document.querySelector('button#build_link');
-// buildButton.addEventListener('click', buildAuthLink);
-
-// const fetchButton = document.querySelector('button#fetch_profile_info');
-// fetchButton.addEventListener('click', fetchProfileInformation);
